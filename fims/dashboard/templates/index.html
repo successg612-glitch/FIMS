@@ -1,0 +1,518 @@
+<title>FIMS Dashboard</title>
+<style>
+  :root {
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --border: rgba(11,11,11,0.10);
+    --accent: #2a78d6;
+    --accent-wash: rgba(42,120,214,0.08);
+    --status-created: #0ca30c;
+    --status-modified: #fab219;
+    --status-replaced: #ec835a;
+    --status-deleted: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --border: rgba(255,255,255,0.10);
+      --accent: #3987e5;
+      --accent-wash: rgba(57,135,229,0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --border: rgba(255,255,255,0.10);
+    --accent: #3987e5;
+    --accent-wash: rgba(57,135,229,0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 40px 24px 64px;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--status-replaced));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-created);
+    box-shadow: 0 0 0 0 rgba(12,163,12,0.6);
+    animation: pulse 2s infinite;
+  }
+  .pulse-dot.idle {
+    background: var(--text-muted);
+    animation: none;
+    box-shadow: none;
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); background: var(--accent-wash); }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(12,163,12,0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(12,163,12,0); }
+    100% { box-shadow: 0 0 0 0 rgba(12,163,12,0); }
+  }
+
+  .config-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    animation: rise 0.4s ease backwards;
+  }
+  .config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .config-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .config-path {
+    font-family: ui-monospace, "Cascadia Code", monospace;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-top: 2px;
+    word-break: break-all;
+  }
+  .watch-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    flex: none;
+  }
+  .watch-pill.on { background: color-mix(in srgb, var(--status-created) 14%, var(--surface-1)); color: var(--status-created); }
+  .watch-pill.off { background: color-mix(in srgb, var(--text-muted) 14%, var(--surface-1)); color: var(--text-secondary); }
+  .watch-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  .config-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .config-form input {
+    flex: 1 1 320px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--page);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: ui-monospace, "Cascadia Code", monospace;
+  }
+  .config-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-wash);
+  }
+  .config-form button {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  .config-form button:hover { filter: brightness(1.08); }
+  .config-error {
+    margin-top: 10px;
+    color: var(--status-deleted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    animation: rise 0.4s ease backwards;
+  }
+  .tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(11,11,11,0.08);
+  }
+  .tile .value {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .tile .label {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tile.total .value { color: var(--accent); }
+  .tile .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .tile[data-type="created"]  .dot { background: var(--status-created); }
+  .tile[data-type="modified"] .dot { background: var(--status-modified); }
+  .tile[data-type="replaced"] .dot { background: var(--status-replaced); }
+  .tile[data-type="deleted"]  .dot { background: var(--status-deleted); }
+
+  .export-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .export-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  thead th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr {
+    transition: background 0.15s ease;
+    animation: rise 0.35s ease backwards;
+  }
+  tbody tr.new-row { animation: rise 0.35s ease; }
+  tbody tr:hover { background: var(--accent-wash); }
+  td.file { font-family: ui-monospace, "Cascadia Code", monospace; color: var(--text-secondary); }
+  td.time { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .badge .icon { font-weight: 700; }
+  .badge[data-type="created"]  { background: color-mix(in srgb, var(--status-created) 14%, var(--surface-1)); }
+  .badge[data-type="modified"] { background: color-mix(in srgb, var(--status-modified) 18%, var(--surface-1)); }
+  .badge[data-type="replaced"] { background: color-mix(in srgb, var(--status-replaced) 16%, var(--surface-1)); }
+  .badge[data-type="deleted"]  { background: color-mix(in srgb, var(--status-deleted) 14%, var(--surface-1)); }
+  .badge[data-type="created"]  .icon { color: var(--status-created); }
+  .badge[data-type="modified"] .icon { color: var(--status-modified); }
+  .badge[data-type="replaced"] .icon { color: var(--status-replaced); }
+  .badge[data-type="deleted"]  .icon { color: var(--status-deleted); }
+
+  .empty {
+    text-align: center;
+    padding: 64px 20px;
+    background: var(--surface-1);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    color: var(--text-secondary);
+  }
+  .empty .icon { font-size: 32px; margin-bottom: 8px; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tiles .tile:nth-child(1) { animation-delay: 0.02s; }
+  .tiles .tile:nth-child(2) { animation-delay: 0.06s; }
+  .tiles .tile:nth-child(3) { animation-delay: 0.10s; }
+  .tiles .tile:nth-child(4) { animation-delay: 0.14s; }
+  .tiles .tile:nth-child(5) { animation-delay: 0.18s; }
+</style>
+<script>
+  // Applied immediately (before paint) so a saved theme preference doesn't flash.
+  (function () {
+    const saved = localStorage.getItem("fims-theme");
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+  })();
+</script>
+
+<div class="wrap">
+  <header>
+    <h1>File Integrity <span>Monitoring System</span></h1>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="status-pill">
+        <span class="pulse-dot {{ '' if watching else 'idle' }}" id="pulse-dot"></span>
+        <span id="status-text">{{ "Live · updates automatically" if watching else "Idle · set a folder below" }}</span>
+      </div>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme"></button>
+    </div>
+  </header>
+
+  <div class="config-card">
+    <div class="config-row">
+      <div>
+        <div class="config-label">Monitored folder</div>
+        <div class="config-path" id="current-path-label">{{ current_path if current_path else "Not configured yet" }}</div>
+      </div>
+      <span class="watch-pill {{ 'on' if watching else 'off' }}" id="watch-pill">
+        <span class="dot"></span> <span id="watch-pill-label">{{ "Watching" if watching else "Not watching" }}</span>
+      </span>
+    </div>
+    <form class="config-form" method="post" action="/configure">
+      <input id="watch-path" name="path" type="text" autocomplete="off"
+             placeholder="e.g. C:\Users\you\Documents\project" value="{{ current_path }}">
+      <button type="submit">Set &amp; start monitoring</button>
+    </form>
+    {% if error %}<div class="config-error">{{ error }}</div>{% endif %}
+  </div>
+
+  <div class="tiles">
+    <div class="tile total">
+      <div class="value" id="stat-total">{{ total }}</div>
+      <div class="label">Total alerts</div>
+    </div>
+    {% for row in summary %}
+    <div class="tile" data-type="{{ row.type }}">
+      <div class="value">{{ row.count }}</div>
+      <div class="label"><span class="dot"></span> {{ row.type | capitalize }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="export-bar">
+    <a class="export-btn" href="/export/csv" download>Export CSV</a>
+    <a class="export-btn" href="/export/pdf" download>Export PDF</a>
+  </div>
+
+  <table id="alerts-table" style="{{ 'display:none' if not alerts else '' }}">
+    <thead>
+      <tr><th>File</th><th>Change</th><th>Timestamp (UTC)</th></tr>
+    </thead>
+    <tbody id="alerts-body">
+      {% for alert in alerts %}
+      <tr style="animation-delay: {{ (loop.index0 * 0.03) | round(2) }}s">
+        <td class="file">{{ alert.filepath }}</td>
+        <td>
+          <span class="badge" data-type="{{ alert.change_type }}">
+            <span class="icon">
+              {%- if alert.change_type == "created" -%}+
+              {%- elif alert.change_type == "modified" -%}~
+              {%- elif alert.change_type == "replaced" -%}&#8644;
+              {%- elif alert.change_type == "deleted" -%}&#215;
+              {%- endif -%}
+            </span>
+            {{ alert.change_type | capitalize }}
+          </span>
+        </td>
+        <td class="time">{{ alert.timestamp[:19] | replace("T", " ") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="empty" id="empty-state" style="{{ '' if not alerts else 'display:none' }}">
+    <div class="icon">&#128269;</div>
+    No alerts yet — the baseline is clean.
+  </div>
+</div>
+
+<script>
+  // --- Theme toggle ---
+  const themeToggle = document.getElementById("theme-toggle");
+
+  function effectiveTheme() {
+    const explicit = document.documentElement.getAttribute("data-theme");
+    if (explicit) return explicit;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function renderToggleIcon() {
+    themeToggle.textContent = effectiveTheme() === "dark" ? "☀" : "☾";
+  }
+  themeToggle.addEventListener("click", () => {
+    const next = effectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("fims-theme", next);
+    renderToggleIcon();
+  });
+  renderToggleIcon();
+
+  // --- Live updates without reloading the page ---
+  const CHANGE_ICONS = { created: "+", modified: "~", replaced: "⇄", deleted: "×" };
+  let knownCount = {{ total }};
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function rowHtml(alert) {
+    const icon = CHANGE_ICONS[alert.change_type] || "";
+    const label = alert.change_type.charAt(0).toUpperCase() + alert.change_type.slice(1);
+    const time = alert.timestamp.slice(0, 19).replace("T", " ");
+    return "<tr class=\"new-row\">" +
+      "<td class=\"file\">" + escapeHtml(alert.filepath) + "</td>" +
+      "<td><span class=\"badge\" data-type=\"" + alert.change_type + "\">" +
+        "<span class=\"icon\">" + icon + "</span> " + label +
+      "</span></td>" +
+      "<td class=\"time\">" + escapeHtml(time) + "</td>" +
+    "</tr>";
+  }
+
+  function updateStats(state) {
+    document.getElementById("stat-total").textContent = state.total;
+    state.summary.forEach((row) => {
+      const el = document.querySelector('.tile[data-type="' + row.type + '"] .value');
+      if (el) el.textContent = row.count;
+    });
+  }
+
+  function updateWatching(state) {
+    document.getElementById("pulse-dot").classList.toggle("idle", !state.watching);
+    document.getElementById("status-text").textContent =
+      state.watching ? "Live · updates automatically" : "Idle · set a folder below";
+    document.getElementById("watch-pill").classList.toggle("on", state.watching);
+    document.getElementById("watch-pill").classList.toggle("off", !state.watching);
+    document.getElementById("watch-pill-label").textContent = state.watching ? "Watching" : "Not watching";
+    document.getElementById("current-path-label").textContent = state.current_path || "Not configured yet";
+  }
+
+  function updateTable(state) {
+    const newTotal = state.alerts.length;
+    if (newTotal === knownCount) return;
+
+    const addedCount = newTotal - knownCount;
+    knownCount = newTotal;
+    if (addedCount <= 0) return; // a reset (new folder configured) — full page already reloaded via the form
+
+    document.getElementById("empty-state").style.display = "none";
+    document.getElementById("alerts-table").style.display = "";
+
+    const tbody = document.getElementById("alerts-body");
+    const added = state.alerts.slice(0, addedCount);
+    for (let i = added.length - 1; i >= 0; i--) {
+      tbody.insertAdjacentHTML("afterbegin", rowHtml(added[i]));
+    }
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch("/api/state");
+      const state = await res.json();
+      updateStats(state);
+      updateWatching(state);
+      updateTable(state);
+    } catch (e) {
+      // transient network hiccup — next tick will retry
+    }
+  }
+  setInterval(poll, 2000);
+</script>
